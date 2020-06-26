@@ -66,17 +66,22 @@ router.post('/change_password', (req, res,next) =>{
   const { oldPassword, newPassword } = req.body;  
   
   User.findById(userId).then( user => {
-    if(user.password == oldPassword){
-      user.password = newPassword;
-      user.save().then( saved=> {
-        return res.status(200).json({
-          success: true,
-          data: saved
+    user.comparePassword(oldPassword, (err, isMatch) => {
+      if (!isMatch) {
+        return res.json({ success: false, message: 'Wrong password' });
+      }else{
+        user.password = newPassword;
+        user.save().then( saved=> {
+          return res.status(200).json({
+            success: true,
+            data: saved
+          })
+        }).catch(err => {
+          return res.json({ success: false, err });
         })
-      }).catch(err => {
-        return res.json({ success: false, err });
-      })
-    }
+      }
+    })
+    
   }).catch( err => {
     return res.json({ success: false, err });
   })
